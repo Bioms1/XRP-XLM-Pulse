@@ -1,2 +1,2 @@
 # XRP-XLM-Pulse
-Live XRP and XLM market dashboard with prices, 24-hour volume, a regional activity radar and a market velocity gauge.
+Live crypto market dashboard for XRP, XLM, HBAR, QNT, ADA, SOL, ETH and BTC, with prices, 24-hour volume per coin and a market velocity gauge.
