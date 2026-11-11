@@ -145,6 +145,23 @@ body.loading .price,body.loading [id$="-vol"],body.loading [id$="-coins"],body.l
 @keyframes zonePulse{to{box-shadow:0 0 40px rgba(251,146,60,.9)}}
 .readout{font-family:var(--display);font-weight:700;font-size:2.1rem;letter-spacing:.02em;line-height:1;}
 
+/* ---------- Snapshot strip and period switch ---------- */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-2);}
+.seg button{padding:.4rem .85rem;min-height:34px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);transition:background .2s,color .2s;}
+.seg button[aria-pressed="true"]{background:#2d2d33;color:var(--ink);}
+@media (pointer:coarse){.seg button{min-height:40px;padding:.5rem 1rem;}}
+.heat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem;}
+@media (min-width:640px){.heat{grid-template-columns:repeat(8,minmax(0,1fr));}}
+.heat-chip{display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;padding:.5rem .6rem;border-radius:10px;border:1px solid var(--line);background:var(--panel);text-align:left;transition:background .6s,border-color .6s,transform .15s;}
+.heat-chip:active{transform:scale(.97);}
+.heat-sym{display:flex;align-items:center;gap:.35rem;font-family:var(--display);font-weight:600;font-size:.8rem;}
+.heat-sym i{display:block;width:7px;height:7px;border-radius:50%;}
+.heat-val{font-family:var(--mono);font-size:.82rem;font-variant-numeric:tabular-nums;color:var(--mute);transition:color .6s;}
+.stats-link{display:inline-flex;align-items:center;gap:.5rem;padding:.45rem .8rem;border-radius:999px;border:1px solid var(--line);background:var(--panel-2);color:var(--mute);font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-decoration:none;transition:color .2s,border-color .2s;}
+.stats-link:hover{color:var(--ink);border-color:#52525b;}
+.stats-link svg{width:14px;height:14px;}
+@media (pointer:coarse){.stats-link{min-height:40px;}}
+
 #toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,30px);max-width:min(560px,calc(100vw - 32px));padding:.7rem 1rem;border-radius:12px;background:#18181b;border:1px solid #3f3f46;color:var(--ink);font-size:.85rem;line-height:1.45;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:50;}
 #toast.show{opacity:1;transform:translate(-50%,0);}
 
@@ -169,10 +186,10 @@ svg{display:block;vertical-align:middle;}
 .gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-5{gap:1.25rem}.gap-6{gap:1.5rem}.gap-x-3{column-gap:.75rem}.gap-y-1{row-gap:.25rem}
 .space-y-2>:not([hidden])~:not([hidden]){margin-top:.5rem}
 .mx-auto{margin-left:auto;margin-right:auto}
-.mb-1\.5{margin-bottom:.375rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-10{margin-bottom:2.5rem}
+.mb-1\.5{margin-bottom:.375rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-10{margin-bottom:2.5rem}.mb-6{margin-bottom:1.5rem}
 .mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mt-5{margin-top:1.25rem}.mt-6{margin-top:1.5rem}.mt-10{margin-top:2.5rem}
 .p-3{padding:.75rem}.p-5{padding:1.25rem}.px-4{padding-left:1rem;padding-right:1rem}
-.pt-4{padding-top:1rem}.pt-7{padding-top:1.75rem}.pb-5{padding-bottom:1.25rem}.pb-20{padding-bottom:5rem}
+.pt-2{padding-top:.5rem}.pt-4{padding-top:1rem}.pt-7{padding-top:1.75rem}.pb-5{padding-bottom:1.25rem}.pb-20{padding-bottom:5rem}
 .w-2\.5{width:.625rem}.h-2\.5{height:.625rem}.min-w-0{min-width:0}
 .max-w-3xl{max-width:48rem}.max-w-6xl{max-width:72rem}
 .rounded-full{border-radius:9999px}
@@ -215,11 +232,20 @@ svg{display:block;vertical-align:middle;}
     </div>
   </header>
 
+  <!-- MARKET HEAT STRIP -->
+  <section aria-labelledby="h-heat" class="mb-6">
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <h2 id="h-heat" class="sec-title"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>Market Snapshot</h2>
+      <div class="seg" role="group" aria-label="Snapshot period"><button id="heat-24h" type="button" aria-pressed="true">24h</button><button id="heat-7d" type="button" aria-pressed="false">7d</button></div>
+    </div>
+    <div id="heat" class="heat"></div>
+  </section>
+
   <!-- 1. TICKER VAULT -->
   <section aria-labelledby="h-vault" class="mb-10">
     <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
-      <h2 id="h-vault" class="sec-title"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>The Ticker Vault</h2>
-      <p class="sec-sub">Green glow on an uptick, red on a downtick</p>
+      <h2 id="h-vault" class="sec-title"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Live Prices</h2>
+      <p class="sec-sub">Green glow on an uptick, red on a downtick &middot; 7-day change and chart</p>
     </div>
     <div id="vault" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
   </section>
@@ -270,7 +296,7 @@ svg{display:block;vertical-align:middle;}
         <p class="font-mono text-sm text-zinc-400 mt-2">Velocity score <span id="v-score" class="text-zinc-100 tabular-nums">0</span> / 100</p>
       </div>
       <div class="flex gap-2 mt-5" id="zone-pills">
-        <div class="zone-pill" data-z="0">Sluggish</div>
+        <div class="zone-pill" data-z="0">Quiet</div>
         <div class="zone-pill" data-z="1">Steady</div>
         <div class="zone-pill" data-z="2">Explosive</div>
       </div>
@@ -283,8 +309,9 @@ svg{display:block;vertical-align:middle;}
   </section>
 
   <footer class="mt-10 text-xs text-zinc-500 leading-relaxed max-w-3xl space-y-2">
-    <p>Prices, 24h volume, market cap and 24h change for XRP, XLM, HBAR, QNT, ADA, SOL, ETH and BTC come from the free CoinGecko <span class="font-mono">simple/price</span> endpoint (no key needed), refreshed every 30 seconds. Volume is aggregated across exchanges and cannot be split into buys and sells, so &ldquo;traded&rdquo; means total turnover.</p>
-    <p>Velocity is a heuristic: 60% volume-to-market-cap turnover and 40% average absolute 24h price move, each averaged across the coins. Zones: Sluggish below 35, Steady 35 to 65, Explosive above 65.</p>
+    <p>Prices, 24h volume, market cap, 24h and 7-day change and the hourly 7-day chart for XRP, XLM, HBAR, QNT, ADA, SOL, ETH and BTC come from the free CoinGecko <span class="font-mono">coins/markets</span> endpoint (no key needed), polled every 30 seconds. CoinGecko itself refreshes roughly every 45 to 60 seconds, so some polls return unchanged numbers. Volume is aggregated across exchanges and cannot be split into buys and sells, so &ldquo;traded&rdquo; means total turnover.</p>
+    <p>Velocity is a heuristic: 60% volume-to-market-cap turnover and 40% average absolute 24h price move, each averaged across the coins. Zones: Quiet below 35, Steady 35 to 65, Explosive above 65.</p>
+    <p class="pt-2"><a id="stats-link" class="stats-link" href="https://crypto-pulse-live.goatcounter.com" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Visitor stats<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a></p>
   </footer>
 </main>
 
@@ -295,7 +322,7 @@ svg{display:block;vertical-align:middle;}
   'use strict';
 
   /* ---------------- config and state ---------------- */
-  var POLL_MS = 30000, SIM_MS = 1600, HIST = 48, TURN_FULL = 0.06;
+  var POLL_MS = 30000, SIM_MS = 1600, HIST = 48, SIMPTS = 168, TURN_FULL = 0.06;
 
   function rgba(h, a) { var n = parseInt(h.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; }
   function shade(h, f) { var n = parseInt(h.slice(1), 16), r = Math.round((n >> 16 & 255) * f), g = Math.round((n >> 8 & 255) * f), b = Math.round((n & 255) * f); return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); }
@@ -306,7 +333,7 @@ svg{display:block;vertical-align:middle;}
   var COINS = {
     xrp:  mk('xrp',  'ripple',            'XRP',  'Ripple · XRP Ledger',      4, '#60a5fa', 0.0009, { price: 1.40,  vol: 2.1e9,  mcap: 8.6e10, chg: 0.8 }),
     xlm:  mk('xlm',  'stellar',           'XLM',  'Stellar Lumens',           5, '#c084fc', 0.0012, { price: 0.19,  vol: 9.5e7,  mcap: 6.4e9,  chg: -0.6 }),
-    hbar: mk('hbar', 'hedera-hashgraph',  'HBAR', 'Hedera',                   5, '#a3e635', 0.0012, { price: 0.17,  vol: 1.2e8,  mcap: 7.0e9,  chg: 0.5 }),
+    hbar: mk('hbar', 'hedera-hashgraph',  'HBAR', 'Hedera',                   5, '#6366f1', 0.0012, { price: 0.17,  vol: 1.2e8,  mcap: 7.0e9,  chg: 0.5 }),
     qnt:  mk('qnt',  'quant-network',     'QNT',  'Quant · Overledger',       2, '#f97316', 0.0009, { price: 95,    vol: 5.0e7,  mcap: 1.4e9,  chg: -0.3 }),
     ada:  mk('ada',  'cardano',           'ADA',  'Cardano',                  4, '#2dd4bf', 0.0010, { price: 0.55,  vol: 6.0e8,  mcap: 2.0e10, chg: 0.4 }),
     sol:  mk('sol',  'solana',            'SOL',  'Solana',                   2, '#f472b6', 0.0010, { price: 150,   vol: 4.0e9,  mcap: 8.0e10, chg: 1.1 }),
@@ -314,7 +341,9 @@ svg{display:block;vertical-align:middle;}
     btc:  mk('btc',  'bitcoin',           'BTC',  'Bitcoin',                  2, '#facc15', 0.0005, { price: 95000, vol: 4.0e10, mcap: 1.9e12, chg: 0.3 })
   };
   var KEYS = ['xrp', 'xlm', 'hbar', 'qnt', 'ada', 'sol', 'eth', 'btc'];
-  var API = 'https://api.coingecko.com/api/v3/simple/price?ids=' + KEYS.map(function (k) { return COINS[k].id; }).join(',') + '&vs_currencies=usd&include_24hr_vol=true&include_24hr_change=true&include_market_cap=true';
+  var IDS = KEYS.map(function (k) { return COINS[k].id; }).join(',');
+  var API_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=' + IDS + '&sparkline=true&price_change_percentage=24h%2C7d&per_page=250&page=1';
+  var API_SIMPLE = 'https://api.coingecko.com/api/v3/simple/price?ids=' + IDS + '&vs_currencies=usd&include_24hr_vol=true&include_24hr_change=true&include_market_cap=true';
 
   var mode = 'loading', simTimer = null, pollTimer = null, retryTimer = null, busy = false;
   var lastTick = Date.now(), period = SIM_MS;
@@ -335,10 +364,11 @@ svg{display:block;vertical-align:middle;}
   KEYS.forEach(function (k) {
     var c = COINS[k];
     c.price = c.seed.price; c.vol = c.seed.vol; c.mcap = c.seed.mcap; c.chg = c.seed.chg;
-    c.ok = true; c.prev = c.price; c.boost = 0; c.drift = 0; c.txt = null; c.shown = c.price; c.volShown = null;
+    c.ok = true; c.has7 = true; c.prev = c.price; c.boost = 0; c.drift = 0; c.txt = null; c.shown = c.price; c.volShown = null;
     c.hist = [];
     var p = c.price;
-    for (var i = 0; i < HIST; i++) { c.hist.unshift(p); p = p * (1 - gauss() * c.sigma * 1.4); }
+    for (var i = 0; i < SIMPTS; i++) { c.hist.unshift(p); p = p * (1 - gauss() * c.sigma * 2.2); }
+    c.chg7 = (c.price / c.hist[0] - 1) * 100;
   });
 
   /* ---------------- build static markup ---------------- */
@@ -403,8 +433,14 @@ svg{display:block;vertical-align:middle;}
     '</article>';
   }
 
+  function heatHTML(c) {
+    var k = c.key;
+    return '<button type="button" id="ht-' + k + '" class="heat-chip" data-k="' + k + '" aria-label="Jump to ' + c.sym + '"><span class="heat-sym"><i style="background:' + c.color + ';box-shadow:0 0 8px ' + c.color + '"></i>' + c.sym + '</span><span id="hv-' + k + '" class="heat-val">—</span></button>';
+  }
+
   $('vault').innerHTML = KEYS.map(function (k) { return tickerHTML(COINS[k]); }).join('');
   $('volumes').innerHTML = KEYS.map(function (k) { return volumeHTML(COINS[k]); }).join('');
+  $('heat').innerHTML = KEYS.map(function (k) { return heatHTML(COINS[k]); }).join('');
 
   /* gauge geometry */
   function pt(score, r) {
@@ -427,6 +463,10 @@ svg{display:block;vertical-align:middle;}
 
   /* ---------------- painting ---------------- */
   function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+  function shownChg(c) {
+    if (c.has7 && typeof c.chg7 === 'number') return { v: c.chg7, lab: '7d' };
+    return { v: c.chg, lab: '24h' };
+  }
   function flash(c, dir) {
     var p = $(c.key + '-price'), card = $('tv-' + c.key), ar = $(c.key + '-arrow');
     restart(p, dir === 'up' ? 'flash-up' : 'flash-down');
@@ -465,15 +505,15 @@ svg{display:block;vertical-align:middle;}
       if (c.txt !== null && txt !== c.txt) flash(c, c.price > c.shown ? 'up' : 'down');
       c.txt = txt; c.shown = c.price;
 
-      var up = c.chg >= 0, pill = $(k + '-chg');
-      pill.textContent = (up ? '▲ ' : '▼ ') + signed(c.chg, 2) + '% 24h';
+      var sc = shownChg(c), up = sc.v >= 0, pill = $(k + '-chg');
+      pill.textContent = (up ? '▲ ' : '▼ ') + signed(sc.v, 2) + '% ' + sc.lab;
       pill.className = 'pill ' + (up ? 'up' : 'down');
 
       var d = c.price - c.prev, pct = c.prev ? (c.price / c.prev - 1) * 100 : 0;
       var arrow = $(k + '-arrow');
       arrow.setAttribute('class', 'arrow ' + (d > 0 ? 'up' : d < 0 ? 'down' : ''));
       $(k + '-delta').textContent = signed(d, c.dec) + ' (' + signed(pct, 3) + '%) ' + (mode === 'live' ? 'since last refresh' : 'last tick');
-      $(k + '-histnote').textContent = mode === 'live' ? c.hist.length + ' refreshes charted' : 'Simulated price path';
+      $(k + '-histnote').textContent = mode !== 'live' ? 'Simulated 7-day path' : c.has7 ? 'Last 7 days · hourly' : c.hist.length + (c.hist.length === 1 ? ' refresh' : ' refreshes') + ' charted';
       sparkPaint(c);
     });
   }
@@ -510,7 +550,7 @@ svg{display:block;vertical-align:middle;}
     });
   }
 
-  var ZN = ['Sluggish', 'Steady', 'Explosive'];
+  var ZN = ['Quiet', 'Steady', 'Explosive'];
   function velocity() {
     var turn = 0, mv = 0, n = 0;
     KEYS.forEach(function (k) { var c = COINS[k]; if (!c.ok) return; n++; turn += c.vol / c.mcap; mv += Math.abs(c.chg); });
@@ -545,7 +585,22 @@ svg{display:block;vertical-align:middle;}
     $('surge').style.display = mode === 'live' ? 'none' : '';
   }
 
-  function paint() { paintTickers(); paintVolumes(); paintGauge(); paintHeader(); }
+  var heatP = '24h';
+  function paintHeat() {
+    KEYS.forEach(function (k) {
+      var c = COINS[k], chip = $('ht-' + k), val = $('hv-' + k), v = null;
+      if (c.ok) v = heatP === '7d' ? (c.has7 && typeof c.chg7 === 'number' ? c.chg7 : null) : c.chg;
+      if (v === null) { val.textContent = '—'; val.style.color = ''; chip.style.background = ''; chip.style.borderColor = ''; return; }
+      var up = v >= 0, i = clamp(Math.abs(v) / (heatP === '7d' ? 15 : 8));
+      var rgb = up ? '52,211,153' : '244,63,94';
+      chip.style.background = 'rgba(' + rgb + ',' + (0.07 + 0.33 * i).toFixed(2) + ')';
+      chip.style.borderColor = 'rgba(' + rgb + ',' + (0.25 + 0.5 * i).toFixed(2) + ')';
+      val.textContent = (up ? '+' : '−') + Math.abs(v).toFixed(2) + '%';
+      val.style.color = up ? '#6ee7b7' : '#fda4af';
+    });
+  }
+
+  function paint() { paintTickers(); paintVolumes(); paintGauge(); paintHeat(); paintHeader(); }
 
   /* ---------------- simulated feed ---------------- */
   function surge(manual) {
@@ -568,7 +623,7 @@ svg{display:block;vertical-align:middle;}
       c.vol = c.seed.vol * (1 + c.boost);
       c.mcap = c.seed.mcap * (c.price / c.seed.price);
       c.chg = c.seed.chg + (c.price / c.seed.price - 1) * 100;
-      c.hist.push(c.price); if (c.hist.length > HIST) c.hist.shift();
+      c.hist[c.hist.length - 1] = c.price; c.chg7 = (c.price / c.hist[0] - 1) * 100;
     });
     if (Math.random() < 0.02) surge(false);
     lastTick = Date.now(); period = SIM_MS;
@@ -594,32 +649,59 @@ svg{display:block;vertical-align:middle;}
       else { c.prev = c.price; }
       c.price = np;
       c.vol = r.usd_24h_vol; c.mcap = r.usd_market_cap; c.chg = r.usd_24h_change;
-      c.hist.push(np); if (c.hist.length > HIST) c.hist.shift();
+      c.chg7 = typeof r.chg7 === 'number' ? r.chg7 : null;
+      if (r.spark) { c.has7 = true; c.hist = r.spark.slice(); c.hist[c.hist.length - 1] = np; }
+      else { c.has7 = false; c.hist.push(np); if (c.hist.length > HIST) c.hist.shift(); }
     });
     lastTick = Date.now(); period = POLL_MS;
     if (first) { clearInterval(pollTimer); pollTimer = setInterval(poll, POLL_MS); }
     paint();
   }
-  function tryLive() {
+  function fetchJSON(url) {
     var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var to = setTimeout(function () { if (ctrl) ctrl.abort(); }, 9000);
-    return fetch(API, ctrl ? { signal: ctrl.signal, cache: 'no-store' } : { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (j) {
-        var got = 0;
-        KEYS.forEach(function (k) {
-          var id = COINS[k].id, r = j && j[id];
-          if (!r || typeof r.usd !== 'number') { if (j) delete j[id]; return; }
-          got++;
-          if (typeof r.usd_24h_vol !== 'number') r.usd_24h_vol = 0;
-          if (typeof r.usd_market_cap !== 'number' || r.usd_market_cap <= 0) r.usd_market_cap = 1;
-          if (typeof r.usd_24h_change !== 'number') r.usd_24h_change = 0;
-        });
-        if (!got) throw new Error('Unexpected response');
-        applyLive(j); return { ok: true };
+    return fetch(url, ctrl ? { signal: ctrl.signal, cache: 'no-store' } : { cache: 'no-store' })
+      .then(function (r) { clearTimeout(to); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); },
+            function (e) { clearTimeout(to); throw e; });
+  }
+  // coins/markets returns an array; reshape it to one object per CoinGecko id.
+  function fromMarkets(arr) {
+    var out = {};
+    if (!Array.isArray(arr)) return out;
+    arr.forEach(function (r) {
+      if (!r || typeof r.current_price !== 'number') return;
+      out[r.id] = {
+        usd: r.current_price, usd_24h_vol: r.total_volume, usd_market_cap: r.market_cap,
+        usd_24h_change: r.price_change_percentage_24h, chg7: r.price_change_percentage_7d_in_currency,
+        spark: r.sparkline_in_7d && r.sparkline_in_7d.price
+      };
+    });
+    return out;
+  }
+  // Fix up missing fields and count how many of our coins came back with a price.
+  function clean(j) {
+    var got = 0;
+    KEYS.forEach(function (k) {
+      var id = COINS[k].id, r = j && j[id];
+      if (!r || typeof r.usd !== 'number') { if (j) delete j[id]; return; }
+      got++;
+      if (typeof r.usd_24h_vol !== 'number') r.usd_24h_vol = 0;
+      if (typeof r.usd_market_cap !== 'number' || r.usd_market_cap <= 0) r.usd_market_cap = 1;
+      if (typeof r.usd_24h_change !== 'number') r.usd_24h_change = 0;
+      if (typeof r.chg7 !== 'number') r.chg7 = null;
+      if (!Array.isArray(r.spark) || r.spark.length < 10) r.spark = null;
+    });
+    return got;
+  }
+  function tryLive() {
+    return fetchJSON(API_MARKETS).then(fromMarkets).then(function (j) { if (!clean(j)) throw new Error('Unexpected response'); return j; })
+      .catch(function (e1) {
+        // Network failure or timeout: no point trying a second endpoint. Otherwise fall back to the simple price feed (24h only).
+        if (e1 && (e1.name === 'AbortError' || e1 instanceof TypeError)) throw e1;
+        return fetchJSON(API_SIMPLE).then(function (j) { if (!clean(j)) throw new Error('Unexpected response'); return j; });
       })
-      .catch(function (e) { return { ok: false, msg: e && e.name === 'AbortError' ? 'timed out' : (e && e.message) || 'unreachable' }; })
-      .then(function (res) { clearTimeout(to); return res; });
+      .then(function (j) { applyLive(j); return { ok: true }; })
+      .catch(function (e) { return { ok: false, msg: e && e.name === 'AbortError' ? 'timed out' : (e && e.message) || 'unreachable' }; });
   }
   function poll() {
     tryLive().then(function (r) { if (!r.ok) toast('CoinGecko did not answer (' + r.msg + '). Keeping the last prices and retrying in 30 seconds.'); });
@@ -632,6 +714,22 @@ svg{display:block;vertical-align:middle;}
     clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 5200);
   }
   $('surge').addEventListener('click', function () { if (mode === 'sim') { surge(true); simTick(); } });
+
+  function setHeat(p) {
+    heatP = p;
+    $('heat-24h').setAttribute('aria-pressed', p === '24h' ? 'true' : 'false');
+    $('heat-7d').setAttribute('aria-pressed', p === '7d' ? 'true' : 'false');
+    paintHeat();
+  }
+  $('heat-24h').addEventListener('click', function () { setHeat('24h'); });
+  $('heat-7d').addEventListener('click', function () { setHeat('7d'); });
+  $('heat').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('.heat-chip') : null;
+    if (!b) return;
+    var t = $('tv-' + b.getAttribute('data-k'));
+    var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (t && t.scrollIntoView) t.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'center' });
+  });
   $('refresh').addEventListener('click', function () {
     if (busy || mode === 'loading') return; busy = true;
     var b = $('refresh'); b.classList.add('spin');
@@ -685,5 +783,7 @@ svg{display:block;vertical-align:middle;}
   window.addEventListener('online', function () { if (mode !== 'loading') tryLive(); });
 })();
 </script>
+<!-- Visitor counting by GoatCounter: no cookies, no personal data -->
+<script data-goatcounter="https://crypto-pulse-live.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
