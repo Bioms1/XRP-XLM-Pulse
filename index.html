@@ -131,8 +131,6 @@ body.loading .price,body.loading [id$="-vol"],body.loading [id$="-coins"],body.l
 .gauge svg{display:block;width:100%;height:auto;overflow:visible;}
 .zone{transition:opacity .5s,filter .5s;}
 #needle{transform-origin:150px 150px;transition:transform 1.5s cubic-bezier(.3,1.5,.5,1);}
-.gauge.explosive #needle-line{animation:quiver .18s linear infinite alternate;}
-@keyframes quiver{from{transform:rotate(-1.4deg)}to{transform:rotate(1.4deg)}}
 #needle-line{transform-origin:150px 150px;}
 .gauge-flow{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:3 14;animation:flowDash var(--gflow,3s) linear infinite;}
 .hub{animation:hub 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
@@ -141,9 +139,30 @@ body.loading .price,body.loading [id$="-vol"],body.loading [id$="-coins"],body.l
 .zone-pill.on{color:#09090b;font-weight:600;}
 .zone-pill.on[data-z="0"]{background:#60a5fa;border-color:#60a5fa;box-shadow:0 0 22px rgba(96,165,250,.45);}
 .zone-pill.on[data-z="1"]{background:#34d399;border-color:#34d399;box-shadow:0 0 22px rgba(52,211,153,.45);}
-.zone-pill.on[data-z="2"]{background:#fb923c;border-color:#fb923c;box-shadow:0 0 26px rgba(251,146,60,.6);animation:zonePulse .8s ease-in-out infinite alternate;}
-@keyframes zonePulse{to{box-shadow:0 0 40px rgba(251,146,60,.9)}}
+.zone-pill.on[data-z="2"]{background:#fb923c;border-color:#fb923c;box-shadow:0 0 22px rgba(251,146,60,.45);}
 .readout{font-family:var(--display);font-weight:700;font-size:2.1rem;letter-spacing:.02em;line-height:1;}
+
+/* ---------- Whole market bar ---------- */
+.wm{display:grid;grid-template-columns:1fr 1fr;overflow:hidden;}
+.wm-item{padding:.85rem 1rem;min-width:0;}
+.wm-item:first-child{grid-column:1/-1;border-bottom:1px solid var(--line);}
+.wm-item:last-child{border-left:1px solid var(--line);}
+@media (min-width:640px){
+  .wm{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .wm-item:first-child{grid-column:auto;border-bottom:0;}
+  .wm-item + .wm-item{border-left:1px solid var(--line);}
+}
+.wm-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);}
+.wm-val{font-family:var(--display);font-weight:700;font-size:1.55rem;line-height:1.15;letter-spacing:.01em;font-variant-numeric:tabular-nums;}
+.wm-val.unk,.wm-val.wait{color:var(--dim);font-size:1.1rem;font-weight:600;}
+.wm-val.wait{animation:loadPulse .9s ease-in-out infinite alternate;}
+.wm-sub{font-size:.72rem;color:var(--dim);margin-top:.35rem;}
+.wm-sub a{color:var(--mute);text-decoration:underline;text-underline-offset:2px;}
+.wm-track{position:relative;height:8px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);margin-top:.6rem;}
+.wm-fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,rgba(250,204,21,.35),#facc15);width:0;transition:width 1s cubic-bezier(.3,1,.4,1);}
+.wm-fg{background:linear-gradient(90deg,#f43f5e,#fb923c,#fbbf24,#a3e635,#34d399);border-color:transparent;}
+.wm-dot{position:absolute;top:50%;left:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#f4f4f5;border:2px solid var(--bg);box-shadow:0 0 0 1px rgba(244,244,245,.5),0 0 12px rgba(244,244,245,.55);transition:left 1s cubic-bezier(.3,1,.4,1);}
+.wm-ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-top:.35rem;}
 
 /* ---------- Snapshot strip and period switch ---------- */
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel-2);}
@@ -232,6 +251,37 @@ svg{display:block;vertical-align:middle;}
     </div>
   </header>
 
+  <!-- WHOLE MARKET BAR -->
+  <section aria-labelledby="h-wm" class="mb-6">
+    <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-3">
+      <h2 id="h-wm" class="sec-title"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg> Whole market</h2>
+      <p class="sec-sub">All of crypto, not just these eight coins</p>
+    </div>
+    <div class="panel wm">
+      <div class="wm-item">
+        <p class="wm-label">Total market cap</p>
+        <div class="flex items-center gap-3 flex-wrap mt-1">
+          <span id="wm-cap" class="wm-val wait">Loading</span>
+          <span id="wm-chg" class="pill" style="display:none"></span>
+        </div>
+        <p class="wm-sub">24h change in the total &middot; via CoinGecko</p>
+      </div>
+      <div class="wm-item">
+        <p class="wm-label">Bitcoin share</p>
+        <p id="wm-btc" class="wm-val wait mt-1">Loading</p>
+        <div class="wm-track" aria-hidden="true"><i id="wm-btc-fill" class="wm-fill"></i></div>
+        <p class="wm-sub">Of the total market cap</p>
+      </div>
+      <div class="wm-item">
+        <p class="wm-label">Fear &amp; Greed</p>
+        <p class="mt-1"><span id="wm-fg" class="wm-val wait">Loading</span> <span id="wm-fg-label" class="font-mono text-xs text-zinc-400"></span></p>
+        <div class="wm-track wm-fg" role="img" id="wm-fg-bar" aria-label="Fear and Greed score unavailable"><i id="wm-fg-dot" class="wm-dot" style="display:none"></i></div>
+        <div class="wm-ends" aria-hidden="true"><span>Fear</span><span>Greed</span></div>
+        <p class="wm-sub">Daily index &middot; <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer">alternative.me</a></p>
+      </div>
+    </div>
+  </section>
+
   <!-- MARKET HEAT STRIP -->
   <section aria-labelledby="h-heat" class="mb-6">
     <div class="flex items-center justify-between gap-3 mb-3">
@@ -270,7 +320,7 @@ svg{display:block;vertical-align:middle;}
       </div>
     <div class="grid gap-6 lg:grid-cols-2 items-center">
       <div class="gauge-wrap" style="width:100%">
-        <div id="gauge" class="gauge" role="img" aria-label="Market velocity gauge">
+        <div id="gauge" class="gauge" role="img" aria-label="Market velocity gauge: Quiet, Normal or Busy">
           <svg viewBox="0 0 300 168">
             <defs>
               <filter id="glow" filterUnits="userSpaceOnUse" x="0" y="0" width="300" height="168"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
@@ -292,13 +342,13 @@ svg{display:block;vertical-align:middle;}
       </div>
       <div>
       <div class="text-center mt-1">
-        <p id="v-label" class="readout">Steady</p>
+        <p id="v-label" class="readout">Normal</p>
         <p class="font-mono text-sm text-zinc-400 mt-2">Velocity score <span id="v-score" class="text-zinc-100 tabular-nums">0</span> / 100</p>
       </div>
       <div class="flex gap-2 mt-5" id="zone-pills">
         <div class="zone-pill" data-z="0">Quiet</div>
-        <div class="zone-pill" data-z="1">Steady</div>
-        <div class="zone-pill" data-z="2">Explosive</div>
+        <div class="zone-pill" data-z="1">Normal</div>
+        <div class="zone-pill" data-z="2">Busy</div>
       </div>
       <dl class="grid grid-cols-2 gap-4 mt-5 font-mono text-sm">
         <div class="panel p-3" style="background:var(--panel-2)"><dt class="text-[11px] uppercase tracking-wider text-zinc-500">Activity vs usual</dt><dd id="v-turn" class="mt-1 tabular-nums"></dd></div>
@@ -310,7 +360,8 @@ svg{display:block;vertical-align:middle;}
 
   <footer class="mt-10 text-xs text-zinc-500 leading-relaxed max-w-3xl space-y-2">
     <p>Prices, 24h volume, market cap, 24h and 7-day change and the hourly 7-day chart for XRP, XLM, HBAR, QNT, ADA, SOL, ETH and BTC come from the free CoinGecko <span class="font-mono">coins/markets</span> endpoint (no key needed), polled every 30 seconds. CoinGecko itself refreshes roughly every 45 to 60 seconds, so some polls return unchanged numbers. Volume is aggregated across exchanges and cannot be split into buys and sells, so &ldquo;traded&rdquo; means total turnover.</p>
-    <p>Each coin&rsquo;s activity ring compares its 24h volume (as a share of market cap) with a rough usual level for that coin, so 50 means a normal day. Those usual levels are estimates, not measured averages. Velocity is a heuristic: 60% average coin activity versus usual and 40% average absolute 24h price move. Zones: Quiet below 35, Steady 35 to 65, Explosive above 65.</p>
+    <p>Whole market figures (total market cap, its 24h change and Bitcoin&rsquo;s share) come from CoinGecko&rsquo;s free <span class="font-mono">/global</span> endpoint, checked every 2 minutes. The Fear &amp; Greed score comes from the <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:2px">alternative.me</a> Fear &amp; Greed Index, a daily index checked every 30 minutes. If a source does not answer, that item shows Unknown.</p>
+    <p>Each coin&rsquo;s activity ring compares its 24h volume (as a share of market cap) with a rough usual level for that coin, so 50 means a normal day. Those usual levels are estimates, not measured averages. Velocity is a heuristic: 60% average coin activity versus usual and 40% average absolute 24h price move. Zones: Quiet below 35, Normal 35 to 65, Busy above 65.</p>
     <p class="pt-2"><a id="stats-link" class="stats-link" href="https://crypto-pulse-live.goatcounter.com" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Visitor stats<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a></p>
   </footer>
 </main>
@@ -554,7 +605,7 @@ svg{display:block;vertical-align:middle;}
     });
   }
 
-  var ZN = ['Quiet', 'Steady', 'Explosive'];
+  var ZN = ['Quiet', 'Normal', 'Busy'];
   function velocity() {
     var rat = 0, tS = 0, mv = 0, n = 0;
     KEYS.forEach(function (k) { var c = COINS[k]; if (!c.ok) return; n++; rat += ratio(c); tS += turnScore(c); mv += Math.abs(c.chg); });
@@ -570,8 +621,7 @@ svg{display:block;vertical-align:middle;}
     $('v-label').style.color = ['#60a5fa', '#34d399', '#fb923c'][z];
     $('v-turn').textContent = v.rat.toFixed(1) + '× usual';
     $('v-mom').textContent = v.mv.toFixed(2) + '% avg move';
-    $('gauge').classList.toggle('explosive', z === 2);
-    $('gauge').setAttribute('aria-label', 'Market velocity: ' + ZN[z] + ', score ' + Math.round(s) + ' of 100');
+    $('gauge').setAttribute('aria-label', 'Market velocity: ' + ZN[z] + ' (zones are Quiet, Normal and Busy), score ' + Math.round(s) + ' of 100');
     for (var i = 0; i < 3; i++) {
       $('z' + i).style.opacity = i === z ? 1 : 0.28;
       $('z' + i).style.filter = i === z ? 'drop-shadow(0 0 7px ' + ['#60a5fa', '#34d399', '#fb923c'][i] + ')' : 'none';
@@ -751,6 +801,77 @@ svg{display:block;vertical-align:middle;}
     requestAnimationFrame(frame);
   })();
 
+
+  /* ---------------- whole market bar ---------------- */
+  // Real data only. If a source fails or returns something unexpected, that item shows "Unknown".
+  var API_GLOBAL = 'https://api.coingecko.com/api/v3/global';
+  var API_FNG = 'https://api.alternative.me/fng/?limit=1';
+  var GLOBAL_MS = 120000, FNG_MS = 1800000;            // CoinGecko keyless is rate limited (~5 calls/min shared), so /global is polled slowly
+  var GLOBAL_STALE = 900000, FNG_STALE = 172800000;    // show Unknown rather than a number that is older than this
+  var FNG_NAMES = ['Extreme Fear', 'Fear', 'Neutral', 'Greed', 'Extreme Greed'];
+  var WM = { cap: null, chg: null, btc: null, gAt: 0, gTried: false, fg: null, fgName: '', fAt: 0, fTried: false };
+  function finite(v) { return typeof v === 'number' && isFinite(v); }
+
+  function wmSet(id, text, cls) { var e = $(id); e.textContent = text; e.className = 'wm-val' + (cls ? ' ' + cls : ''); }
+  function paintWM() {
+    var now = Date.now(), gOk = WM.gAt && now - WM.gAt < GLOBAL_STALE, fOk = WM.fAt && now - WM.fAt < FNG_STALE;
+    var wait = function (tried) { return tried ? ['Unknown', 'unk'] : ['Loading', 'wait']; };
+
+    var w = wait(WM.gTried), cap = $('wm-cap'), chg = $('wm-chg');
+    if (gOk && finite(WM.cap) && WM.cap > 0) wmSet('wm-cap', fmtCompact(WM.cap, '$'), ''); else wmSet('wm-cap', w[0], w[1]);
+    if (gOk && finite(WM.chg)) {
+      var up = WM.chg >= 0;
+      chg.style.display = ''; chg.textContent = (up ? '▲ ' : '▼ ') + signed(WM.chg, 2) + '% 24h'; chg.className = 'pill ' + (up ? 'up' : 'down');
+    } else if (WM.gTried) { chg.style.display = ''; chg.textContent = '24h change unknown'; chg.className = 'pill'; }
+    else chg.style.display = 'none';
+
+    var fill = $('wm-btc-fill');
+    if (gOk && finite(WM.btc) && WM.btc > 0 && WM.btc < 100) { wmSet('wm-btc', WM.btc.toFixed(1) + '%', ''); fill.style.width = WM.btc.toFixed(1) + '%'; }
+    else { wmSet('wm-btc', w[0], w[1]); fill.style.width = '0'; }
+
+    var f = wait(WM.fTried), dot = $('wm-fg-dot'), bar = $('wm-fg-bar');
+    if (fOk && finite(WM.fg)) {
+      wmSet('wm-fg', String(WM.fg), '');
+      $('wm-fg-label').textContent = WM.fgName;
+      dot.style.display = ''; dot.style.left = WM.fg + '%'; bar.style.opacity = '';
+      bar.setAttribute('aria-label', 'Fear and Greed score ' + WM.fg + ' out of 100' + (WM.fgName ? ', ' + WM.fgName : '') + ', on a scale from Fear to Greed');
+    } else {
+      wmSet('wm-fg', f[0], f[1]); $('wm-fg-label').textContent = ''; dot.style.display = 'none';
+      bar.style.opacity = '.3';
+      bar.setAttribute('aria-label', 'Fear and Greed score unavailable');
+    }
+  }
+
+  function loadGlobal() {
+    return fetchJSON(API_GLOBAL).then(function (j) {
+      var d = j && j.data;
+      if (!d || typeof d !== 'object') throw new Error('Unexpected response');
+      var cap = d.total_market_cap && d.total_market_cap.usd, btc = d.market_cap_percentage && d.market_cap_percentage.btc, chg = d.market_cap_change_percentage_24h_usd;
+      // Each figure is checked on its own; one bad field does not hide the others.
+      WM.cap = finite(cap) && cap > 0 ? cap : null;
+      WM.btc = finite(btc) && btc > 0 && btc < 100 ? btc : null;
+      WM.chg = finite(chg) ? chg : null;
+      WM.gAt = Date.now();
+    }).catch(function () { /* keep the last good values until they go stale */ }).then(function () { WM.gTried = true; paintWM(); });
+  }
+  function loadFng() {
+    return fetchJSON(API_FNG).then(function (j) {
+      var row = j && j.data && j.data[0];
+      var v = row ? Number(row.value) : NaN, ts = row ? Number(row.timestamp) * 1000 : NaN;
+      if (!row || row.value === '' || !finite(v) || v < 0 || v > 100 || Math.round(v) !== v) throw new Error('Unexpected response');
+      if (finite(ts) && Date.now() - ts > FNG_STALE) throw new Error('Old reading');   // the index is daily; ignore a reading that is days old
+      WM.fg = v;
+      WM.fgName = FNG_NAMES.indexOf(row.value_classification) >= 0 ? row.value_classification : '';
+      WM.fAt = Date.now();
+    }).catch(function () { /* keep the last good value until it goes stale */ }).then(function () { WM.fTried = true; paintWM(); });
+  }
+  paintWM();
+  setTimeout(loadGlobal, 1800);          // a short gap after the price request keeps the first burst of CoinGecko calls small
+  loadFng();
+  setInterval(loadGlobal, GLOBAL_MS);
+  setInterval(loadFng, FNG_MS);
+  setInterval(paintWM, 60000);           // lets old values flip to Unknown on their own
+
   /* ---------------- boot ---------------- */
   // No placeholder numbers: hold the cards in a loading state and fetch live data immediately.
   document.body.classList.add('loading');
@@ -778,6 +899,8 @@ svg{display:block;vertical-align:middle;}
   retryTimer = setInterval(function () { if (mode === 'sim') tryLive(); }, 15000);
   document.addEventListener('visibilitychange', function () {
     if (document.visibilityState !== 'visible') return;
+    if (Date.now() - WM.gAt > GLOBAL_MS) loadGlobal();
+    if (Date.now() - WM.fAt > FNG_MS) loadFng();
     if (mode === 'live') { if (Date.now() - lastTick > POLL_MS / 2) poll(); }
     else if (mode === 'sim') tryLive();
   });
