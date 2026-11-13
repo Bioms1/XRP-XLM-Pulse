@@ -301,7 +301,7 @@ svg{display:block;vertical-align:middle;}
         <div class="zone-pill" data-z="2">Explosive</div>
       </div>
       <dl class="grid grid-cols-2 gap-4 mt-5 font-mono text-sm">
-        <div class="panel p-3" style="background:var(--panel-2)"><dt class="text-[11px] uppercase tracking-wider text-zinc-500">Turnover</dt><dd id="v-turn" class="mt-1 tabular-nums"></dd></div>
+        <div class="panel p-3" style="background:var(--panel-2)"><dt class="text-[11px] uppercase tracking-wider text-zinc-500">Activity vs usual</dt><dd id="v-turn" class="mt-1 tabular-nums"></dd></div>
         <div class="panel p-3" style="background:var(--panel-2)"><dt class="text-[11px] uppercase tracking-wider text-zinc-500">Price momentum</dt><dd id="v-mom" class="mt-1 tabular-nums"></dd></div>
       </dl>
       </div>
@@ -310,7 +310,7 @@ svg{display:block;vertical-align:middle;}
 
   <footer class="mt-10 text-xs text-zinc-500 leading-relaxed max-w-3xl space-y-2">
     <p>Prices, 24h volume, market cap, 24h and 7-day change and the hourly 7-day chart for XRP, XLM, HBAR, QNT, ADA, SOL, ETH and BTC come from the free CoinGecko <span class="font-mono">coins/markets</span> endpoint (no key needed), polled every 30 seconds. CoinGecko itself refreshes roughly every 45 to 60 seconds, so some polls return unchanged numbers. Volume is aggregated across exchanges and cannot be split into buys and sells, so &ldquo;traded&rdquo; means total turnover.</p>
-    <p>Velocity is a heuristic: 60% volume-to-market-cap turnover and 40% average absolute 24h price move, each averaged across the coins. Zones: Quiet below 35, Steady 35 to 65, Explosive above 65.</p>
+    <p>Each coin&rsquo;s activity ring compares its 24h volume (as a share of market cap) with a rough usual level for that coin, so 50 means a normal day. Those usual levels are estimates, not measured averages. Velocity is a heuristic: 60% average coin activity versus usual and 40% average absolute 24h price move. Zones: Quiet below 35, Steady 35 to 65, Explosive above 65.</p>
     <p class="pt-2"><a id="stats-link" class="stats-link" href="https://crypto-pulse-live.goatcounter.com" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Visitor stats<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a></p>
   </footer>
 </main>
@@ -322,23 +322,25 @@ svg{display:block;vertical-align:middle;}
   'use strict';
 
   /* ---------------- config and state ---------------- */
-  var POLL_MS = 30000, SIM_MS = 1600, HIST = 48, SIMPTS = 168, TURN_FULL = 0.06;
+  var POLL_MS = 30000, SIM_MS = 1600, HIST = 48, SIMPTS = 168;
 
   function rgba(h, a) { var n = parseInt(h.slice(1), 16); return 'rgba(' + (n >> 16 & 255) + ',' + (n >> 8 & 255) + ',' + (n & 255) + ',' + a + ')'; }
   function shade(h, f) { var n = parseInt(h.slice(1), 16), r = Math.round((n >> 16 & 255) * f), g = Math.round((n >> 8 & 255) * f), b = Math.round((n & 255) * f); return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); }
   // Seeds are illustrative starting points for the offline simulation only. They are not market data.
-  function mk(key, id, sym, sub, dec, color, sigma, seed) {
-    return { key: key, id: id, sym: sym, name: sym, sub: sub, dec: dec, color: color, sigma: sigma, glow: rgba(color, .45), dark: shade(color, .55), seed: seed };
+  function mk(key, id, sym, sub, dec, color, sigma, seed, usual) {
+    return { key: key, usual: usual, id: id, sym: sym, name: sym, sub: sub, dec: dec, color: color, sigma: sigma, glow: rgba(color, .45), dark: shade(color, .55), seed: seed };
   }
+  // "usual" = a typical day's 24h volume as a share of market cap for each coin (CoinGecko volume).
+  // These are rough starting guesses, not measured averages. Tune them here: a coin reads 50 when it trades at its usual level.
   var COINS = {
-    xrp:  mk('xrp',  'ripple',            'XRP',  'Ripple · XRP Ledger',      4, '#60a5fa', 0.0009, { price: 1.40,  vol: 2.1e9,  mcap: 8.6e10, chg: 0.8 }),
-    xlm:  mk('xlm',  'stellar',           'XLM',  'Stellar Lumens',           5, '#c084fc', 0.0012, { price: 0.19,  vol: 9.5e7,  mcap: 6.4e9,  chg: -0.6 }),
-    hbar: mk('hbar', 'hedera-hashgraph',  'HBAR', 'Hedera',                   5, '#6366f1', 0.0012, { price: 0.17,  vol: 1.2e8,  mcap: 7.0e9,  chg: 0.5 }),
-    qnt:  mk('qnt',  'quant-network',     'QNT',  'Quant · Overledger',       2, '#f97316', 0.0009, { price: 95,    vol: 5.0e7,  mcap: 1.4e9,  chg: -0.3 }),
-    ada:  mk('ada',  'cardano',           'ADA',  'Cardano',                  4, '#2dd4bf', 0.0010, { price: 0.55,  vol: 6.0e8,  mcap: 2.0e10, chg: 0.4 }),
-    sol:  mk('sol',  'solana',            'SOL',  'Solana',                   2, '#f472b6', 0.0010, { price: 150,   vol: 4.0e9,  mcap: 8.0e10, chg: 1.1 }),
-    eth:  mk('eth',  'ethereum',          'ETH',  'Ethereum',                 2, '#cbd5e1', 0.0007, { price: 3200,  vol: 2.0e10, mcap: 3.9e11, chg: -0.2 }),
-    btc:  mk('btc',  'bitcoin',           'BTC',  'Bitcoin',                  2, '#facc15', 0.0005, { price: 95000, vol: 4.0e10, mcap: 1.9e12, chg: 0.3 })
+    xrp:  mk('xrp',  'ripple',            'XRP',  'Ripple · XRP Ledger',      4, '#60a5fa', 0.0009, { price: 1.40,  vol: 2.1e9,  mcap: 8.6e10, chg: 0.8 }, 0.04),
+    xlm:  mk('xlm',  'stellar',           'XLM',  'Stellar Lumens',           5, '#c084fc', 0.0012, { price: 0.19,  vol: 9.5e7,  mcap: 6.4e9,  chg: -0.6 }, 0.035),
+    hbar: mk('hbar', 'hedera-hashgraph',  'HBAR', 'Hedera',                   5, '#6366f1', 0.0012, { price: 0.17,  vol: 1.2e8,  mcap: 7.0e9,  chg: 0.5 }, 0.03),
+    qnt:  mk('qnt',  'quant-network',     'QNT',  'Quant · Overledger',       2, '#f97316', 0.0009, { price: 95,    vol: 5.0e7,  mcap: 1.4e9,  chg: -0.3 }, 0.015),
+    ada:  mk('ada',  'cardano',           'ADA',  'Cardano',                  4, '#2dd4bf', 0.0010, { price: 0.55,  vol: 6.0e8,  mcap: 2.0e10, chg: 0.4 }, 0.04),
+    sol:  mk('sol',  'solana',            'SOL',  'Solana',                   2, '#f472b6', 0.0010, { price: 150,   vol: 4.0e9,  mcap: 8.0e10, chg: 1.1 }, 0.06),
+    eth:  mk('eth',  'ethereum',          'ETH',  'Ethereum',                 2, '#cbd5e1', 0.0007, { price: 3200,  vol: 2.0e10, mcap: 3.9e11, chg: -0.2 }, 0.05),
+    btc:  mk('btc',  'bitcoin',           'BTC',  'Bitcoin',                  2, '#facc15', 0.0005, { price: 95000, vol: 4.0e10, mcap: 1.9e12, chg: 0.3 }, 0.025)
   };
   var KEYS = ['xrp', 'xlm', 'hbar', 'qnt', 'ada', 'sol', 'eth', 'btc'];
   var IDS = KEYS.map(function (k) { return COINS[k].id; }).join(',');
@@ -488,7 +490,9 @@ svg{display:block;vertical-align:middle;}
     ['end', 'endping'].forEach(function (s) { var e = $(c.key + '-' + s); e.setAttribute('cx', last[0].toFixed(1)); e.setAttribute('cy', last[1].toFixed(1)); e.setAttribute('fill', col); });
   }
 
-  function turnScore(c) { return clamp((c.vol / c.mcap) / TURN_FULL) * 100; }
+  // How busy a coin is versus its own usual level: 1.0x = usual -> score 50, 2x -> 67, 4x -> 80. Smooth, so it rarely pins at 100.
+  function ratio(c) { return (c.vol / c.mcap) / c.usual; }
+  function turnScore(c) { var r = ratio(c); return r / (r + 1) * 100; }
 
   function paintTickers() {
     KEYS.forEach(function (k) {
@@ -536,7 +540,7 @@ svg{display:block;vertical-align:middle;}
       $(k + '-ring').style.strokeDashoffset = (RING_C * (1 - score / 100)).toFixed(2);
       $(k + '-bar').style.width = Math.max(3, score).toFixed(1) + '%';
       $(k + '-level').textContent = levelName(score) + ' trading';
-      $(k + '-turn').textContent = 'Turnover ' + ((c.vol / c.mcap) * 100).toFixed(2) + '% of mcap';
+      $(k + '-turn').textContent = ratio(c).toFixed(1) + '× usual · ' + ((c.vol / c.mcap) * 100).toFixed(1) + '% mcap';
       card.style.setProperty('--pulse', (2.6 - score / 100 * 2.0).toFixed(2) + 's');
       card.style.setProperty('--flow', (3.2 - score / 100 * 2.7).toFixed(2) + 's');
 
@@ -552,11 +556,11 @@ svg{display:block;vertical-align:middle;}
 
   var ZN = ['Quiet', 'Steady', 'Explosive'];
   function velocity() {
-    var turn = 0, mv = 0, n = 0;
-    KEYS.forEach(function (k) { var c = COINS[k]; if (!c.ok) return; n++; turn += c.vol / c.mcap; mv += Math.abs(c.chg); });
-    n = n || 1; turn /= n; mv /= n;
-    var tS = clamp(turn / TURN_FULL) * 100, mS = clamp(mv / 8) * 100;
-    return { score: 0.6 * tS + 0.4 * mS, turn: turn, mv: mv, tS: tS, mS: mS };
+    var rat = 0, tS = 0, mv = 0, n = 0;
+    KEYS.forEach(function (k) { var c = COINS[k]; if (!c.ok) return; n++; rat += ratio(c); tS += turnScore(c); mv += Math.abs(c.chg); });
+    n = n || 1; rat /= n; tS /= n; mv /= n;
+    var mS = clamp(mv / 4) * 100;
+    return { score: 0.6 * tS + 0.4 * mS, rat: rat, mv: mv, tS: tS, mS: mS };
   }
   function paintGauge() {
     var v = velocity(), s = v.score, z = s < 35 ? 0 : s < 65 ? 1 : 2;
@@ -564,7 +568,7 @@ svg{display:block;vertical-align:middle;}
     $('v-score').textContent = Math.round(s);
     $('v-label').textContent = ZN[z];
     $('v-label').style.color = ['#60a5fa', '#34d399', '#fb923c'][z];
-    $('v-turn').textContent = (v.turn * 100).toFixed(2) + '% of mcap';
+    $('v-turn').textContent = v.rat.toFixed(1) + '× usual';
     $('v-mom').textContent = v.mv.toFixed(2) + '% avg move';
     $('gauge').classList.toggle('explosive', z === 2);
     $('gauge').setAttribute('aria-label', 'Market velocity: ' + ZN[z] + ', score ' + Math.round(s) + ' of 100');
