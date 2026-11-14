@@ -348,7 +348,7 @@ svg{display:block;vertical-align:middle;}
   <footer class="mt-10 text-xs text-zinc-500 leading-relaxed max-w-3xl space-y-2">
     <p>Prices, 24h volume, market cap, 24h and 7-day change and the hourly 7-day chart for XRP, XLM, HBAR, QNT, ADA, SOL, ETH and BTC come from the free CoinGecko <span class="font-mono">coins/markets</span> endpoint (no key needed), polled every 30 seconds; the 12-month % change comes with the same request. The 6-month and 12-month charts come from CoinGecko&rsquo;s <span class="font-mono">market_chart</span> endpoint (daily points), loaded one coin at a time in the background and saved on your device for 12 hours, so the first visit takes a few minutes to fill in. CoinGecko itself refreshes roughly every 45 to 60 seconds, so some polls return unchanged numbers. Volume is aggregated across exchanges and cannot be split into buys and sells, so &ldquo;traded&rdquo; means total turnover.</p>
     <p>Whole market figures (total market cap and its 24h change) come from CoinGecko&rsquo;s free <span class="font-mono">/global</span> endpoint, checked every 2 minutes. The Fear &amp; Greed score comes from the <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:2px">alternative.me</a> Fear &amp; Greed Index, a daily index checked every 30 minutes. If a source does not answer, that item shows Unknown.</p>
-    <p>Each coin&rsquo;s activity ring compares its 24h volume (as a share of market cap) with a rough usual level for that coin, so 50 means a normal day. Those usual levels are estimates, not measured averages. Velocity is a heuristic: 60% average coin activity versus usual and 40% average absolute 24h price move. Zones: Quiet below 35, Normal 35 to 65, Busy above 65.</p>
+    <p>Each coin&rsquo;s activity ring compares its 24h volume (as a share of market cap) with a rough usual level for that coin, so 50 means a normal day. Those usual levels are estimates, not measured averages. Velocity is a heuristic: 80% average coin activity versus usual and 20% average absolute 24h price move. Zones: Quiet below 35, Normal 35 to 65, Busy above 65.</p>
     <p class="pt-2"><a id="stats-link" class="stats-link" href="https://crypto-pulse-live.goatcounter.com" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Visitor stats<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a></p>
   </footer>
 </main>
@@ -635,7 +635,7 @@ svg{display:block;vertical-align:middle;}
     KEYS.forEach(function (k) { var c = COINS[k]; if (!c.ok) return; n++; rat += ratio(c); tS += turnScore(c); mv += Math.abs(c.chg); });
     n = n || 1; rat /= n; tS /= n; mv /= n;
     var mS = clamp(mv / 4) * 100;
-    return { score: 0.6 * tS + 0.4 * mS, rat: rat, mv: mv, tS: tS, mS: mS };
+    return { score: 0.8 * tS + 0.2 * mS, rat: rat, mv: mv, tS: tS, mS: mS };
   }
   function paintGauge() {
     var v = velocity(), s = v.score, z = s < 35 ? 0 : s < 65 ? 1 : 2;
