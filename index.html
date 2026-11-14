@@ -143,14 +143,13 @@ body.loading .price,body.loading [id$="-vol"],body.loading [id$="-coins"],body.l
 .readout{font-family:var(--display);font-weight:700;font-size:2.1rem;letter-spacing:.02em;line-height:1;}
 
 /* ---------- Whole market bar ---------- */
-.wm{display:grid;grid-template-columns:1fr 1fr;overflow:hidden;}
-.wm-item{padding:.85rem 1rem;min-width:0;}
-.wm-item:first-child{grid-column:1/-1;border-bottom:1px solid var(--line);}
-.wm-item:last-child{border-left:1px solid var(--line);}
+/* Two tiles: market cap, then a wider Fear & Greed tile. */
+.wm{display:grid;grid-template-columns:1fr;overflow:hidden;}
+.wm-item{padding:.9rem 1rem;min-width:0;}
+.wm-item + .wm-item{border-top:1px solid var(--line);}
 @media (min-width:640px){
-  .wm{grid-template-columns:repeat(3,minmax(0,1fr));}
-  .wm-item:first-child{grid-column:auto;border-bottom:0;}
-  .wm-item + .wm-item{border-left:1px solid var(--line);}
+  .wm{grid-template-columns:minmax(0,1fr) minmax(0,2fr);}
+  .wm-item + .wm-item{border-top:0;border-left:1px solid var(--line);}
 }
 .wm-label{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);}
 .wm-val{font-family:var(--display);font-weight:700;font-size:1.55rem;line-height:1.15;letter-spacing:.01em;font-variant-numeric:tabular-nums;}
@@ -159,9 +158,10 @@ body.loading .price,body.loading [id$="-vol"],body.loading [id$="-coins"],body.l
 .wm-sub{font-size:.72rem;color:var(--dim);margin-top:.35rem;}
 .wm-sub a{color:var(--mute);text-decoration:underline;text-underline-offset:2px;}
 .wm-track{position:relative;height:8px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);margin-top:.6rem;}
-.wm-fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,rgba(250,204,21,.35),#facc15);width:0;transition:width 1s cubic-bezier(.3,1,.4,1);}
-.wm-fg{background:linear-gradient(90deg,#f43f5e,#fb923c,#fbbf24,#a3e635,#34d399);border-color:transparent;}
-.wm-dot{position:absolute;top:50%;left:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#f4f4f5;border:2px solid var(--bg);box-shadow:0 0 0 1px rgba(244,244,245,.5),0 0 12px rgba(244,244,245,.55);transition:left 1s cubic-bezier(.3,1,.4,1);}
+.wm-fg{height:12px;background:linear-gradient(90deg,#f43f5e,#fb923c,#fbbf24,#a3e635,#34d399);border-color:transparent;margin-top:.8rem;}
+.wm-val.big{font-size:2.1rem;}
+.wm-val.big.unk,.wm-val.big.wait{font-size:1.2rem;}
+.wm-dot{position:absolute;top:50%;left:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#f4f4f5;border:2px solid var(--bg);box-shadow:0 0 0 1px rgba(244,244,245,.5),0 0 12px rgba(244,244,245,.55);transition:left 1s cubic-bezier(.3,1,.4,1);}
 .wm-ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-top:.35rem;}
 
 /* ---------- Snapshot strip and period switch ---------- */
@@ -267,17 +267,11 @@ svg{display:block;vertical-align:middle;}
         <p class="wm-sub">24h change in the total &middot; via CoinGecko</p>
       </div>
       <div class="wm-item">
-        <p class="wm-label">Bitcoin share</p>
-        <p id="wm-btc" class="wm-val wait mt-1">Loading</p>
-        <div class="wm-track" aria-hidden="true"><i id="wm-btc-fill" class="wm-fill"></i></div>
-        <p class="wm-sub">Of the total market cap</p>
-      </div>
-      <div class="wm-item">
         <p class="wm-label">Fear &amp; Greed</p>
-        <p class="mt-1"><span id="wm-fg" class="wm-val wait">Loading</span> <span id="wm-fg-label" class="font-mono text-xs text-zinc-400"></span></p>
+        <p class="mt-1 flex items-baseline gap-3 flex-wrap"><span id="wm-fg" class="wm-val big wait">Loading</span> <span id="wm-fg-label" class="font-display text-lg font-semibold text-zinc-300"></span></p>
         <div class="wm-track wm-fg" role="img" id="wm-fg-bar" aria-label="Fear and Greed score unavailable"><i id="wm-fg-dot" class="wm-dot" style="display:none"></i></div>
-        <div class="wm-ends" aria-hidden="true"><span>Fear</span><span>Greed</span></div>
-        <p class="wm-sub">Daily index &middot; <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer">alternative.me</a></p>
+        <div class="wm-ends" aria-hidden="true"><span>Extreme fear</span><span>Neutral</span><span>Extreme greed</span></div>
+        <p class="wm-sub">Market mood from 0 (extreme fear) to 100 (extreme greed) &middot; daily index &middot; <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer">alternative.me</a></p>
       </div>
     </div>
   </section>
@@ -360,7 +354,7 @@ svg{display:block;vertical-align:middle;}
 
   <footer class="mt-10 text-xs text-zinc-500 leading-relaxed max-w-3xl space-y-2">
     <p>Prices, 24h volume, market cap, 24h and 7-day change and the hourly 7-day chart for XRP, XLM, HBAR, QNT, ADA, SOL, ETH and BTC come from the free CoinGecko <span class="font-mono">coins/markets</span> endpoint (no key needed), polled every 30 seconds. CoinGecko itself refreshes roughly every 45 to 60 seconds, so some polls return unchanged numbers. Volume is aggregated across exchanges and cannot be split into buys and sells, so &ldquo;traded&rdquo; means total turnover.</p>
-    <p>Whole market figures (total market cap, its 24h change and Bitcoin&rsquo;s share) come from CoinGecko&rsquo;s free <span class="font-mono">/global</span> endpoint, checked every 2 minutes. The Fear &amp; Greed score comes from the <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:2px">alternative.me</a> Fear &amp; Greed Index, a daily index checked every 30 minutes. If a source does not answer, that item shows Unknown.</p>
+    <p>Whole market figures (total market cap and its 24h change) come from CoinGecko&rsquo;s free <span class="font-mono">/global</span> endpoint, checked every 2 minutes. The Fear &amp; Greed score comes from the <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:2px">alternative.me</a> Fear &amp; Greed Index, a daily index checked every 30 minutes. If a source does not answer, that item shows Unknown.</p>
     <p>Each coin&rsquo;s activity ring compares its 24h volume (as a share of market cap) with a rough usual level for that coin, so 50 means a normal day. Those usual levels are estimates, not measured averages. Velocity is a heuristic: 60% average coin activity versus usual and 40% average absolute 24h price move. Zones: Quiet below 35, Normal 35 to 65, Busy above 65.</p>
     <p class="pt-2"><a id="stats-link" class="stats-link" href="https://crypto-pulse-live.goatcounter.com" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Visitor stats<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a></p>
   </footer>
@@ -809,7 +803,7 @@ svg{display:block;vertical-align:middle;}
   var GLOBAL_MS = 120000, FNG_MS = 1800000;            // CoinGecko keyless is rate limited (~5 calls/min shared), so /global is polled slowly
   var GLOBAL_STALE = 900000, FNG_STALE = 172800000;    // show Unknown rather than a number that is older than this
   var FNG_NAMES = ['Extreme Fear', 'Fear', 'Neutral', 'Greed', 'Extreme Greed'];
-  var WM = { cap: null, chg: null, btc: null, gAt: 0, gTried: false, fg: null, fgName: '', fAt: 0, fTried: false };
+  var WM = { cap: null, chg: null, gAt: 0, gTried: false, fg: null, fgName: '', fAt: 0, fTried: false };
   function finite(v) { return typeof v === 'number' && isFinite(v); }
 
   function wmSet(id, text, cls) { var e = $(id); e.textContent = text; e.className = 'wm-val' + (cls ? ' ' + cls : ''); }
@@ -825,18 +819,14 @@ svg{display:block;vertical-align:middle;}
     } else if (WM.gTried) { chg.style.display = ''; chg.textContent = '24h change unknown'; chg.className = 'pill'; }
     else chg.style.display = 'none';
 
-    var fill = $('wm-btc-fill');
-    if (gOk && finite(WM.btc) && WM.btc > 0 && WM.btc < 100) { wmSet('wm-btc', WM.btc.toFixed(1) + '%', ''); fill.style.width = WM.btc.toFixed(1) + '%'; }
-    else { wmSet('wm-btc', w[0], w[1]); fill.style.width = '0'; }
-
     var f = wait(WM.fTried), dot = $('wm-fg-dot'), bar = $('wm-fg-bar');
     if (fOk && finite(WM.fg)) {
-      wmSet('wm-fg', String(WM.fg), '');
+      wmSet('wm-fg', String(WM.fg), 'big');
       $('wm-fg-label').textContent = WM.fgName;
       dot.style.display = ''; dot.style.left = WM.fg + '%'; bar.style.opacity = '';
       bar.setAttribute('aria-label', 'Fear and Greed score ' + WM.fg + ' out of 100' + (WM.fgName ? ', ' + WM.fgName : '') + ', on a scale from Fear to Greed');
     } else {
-      wmSet('wm-fg', f[0], f[1]); $('wm-fg-label').textContent = ''; dot.style.display = 'none';
+      wmSet('wm-fg', f[0], 'big ' + f[1]); $('wm-fg-label').textContent = ''; dot.style.display = 'none';
       bar.style.opacity = '.3';
       bar.setAttribute('aria-label', 'Fear and Greed score unavailable');
     }
@@ -846,10 +836,9 @@ svg{display:block;vertical-align:middle;}
     return fetchJSON(API_GLOBAL).then(function (j) {
       var d = j && j.data;
       if (!d || typeof d !== 'object') throw new Error('Unexpected response');
-      var cap = d.total_market_cap && d.total_market_cap.usd, btc = d.market_cap_percentage && d.market_cap_percentage.btc, chg = d.market_cap_change_percentage_24h_usd;
+      var cap = d.total_market_cap && d.total_market_cap.usd, chg = d.market_cap_change_percentage_24h_usd;
       // Each figure is checked on its own; one bad field does not hide the others.
       WM.cap = finite(cap) && cap > 0 ? cap : null;
-      WM.btc = finite(btc) && btc > 0 && btc < 100 ? btc : null;
       WM.chg = finite(chg) ? chg : null;
       WM.gAt = Date.now();
     }).catch(function () { /* keep the last good values until they go stale */ }).then(function () { WM.gTried = true; paintWM(); });
