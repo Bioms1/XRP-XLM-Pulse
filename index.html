@@ -346,7 +346,7 @@ svg{display:block;vertical-align:middle;}
   </section>
 
   <footer class="mt-10 text-xs text-zinc-500 leading-relaxed max-w-3xl space-y-2">
-    <p>Prices, 24h volume, market cap, 24h and 7-day change and the hourly 7-day chart for XRP, XLM, HBAR, QNT, ADA, SOL, ETH and BTC come from the free CoinGecko <span class="font-mono">coins/markets</span> endpoint (no key needed), polled every 30 seconds; the 12-month % change comes with the same request. The 6-month and 12-month charts come from CoinGecko&rsquo;s <span class="font-mono">market_chart</span> endpoint (daily points), loaded one coin at a time in the background and saved on your device for 12 hours, so the first visit takes a few minutes to fill in. CoinGecko itself refreshes roughly every 45 to 60 seconds, so some polls return unchanged numbers. Volume is aggregated across exchanges and cannot be split into buys and sells, so &ldquo;traded&rdquo; means total turnover.</p>
+    <p>Prices, 24h volume, market cap, 24h and 7-day change and the hourly 7-day chart for XRP, XLM, HBAR, QNT, ADA, SOL, ETH and BTC come from the free CoinGecko <span class="font-mono">coins/markets</span> endpoint (no key needed), polled every 30 seconds; the 12-month % change comes with the same request. The 6-month and 12-month charts come from CoinGecko&rsquo;s <span class="font-mono">market_chart</span> endpoint (daily points), loaded one coin at a time in the background and saved on your device for up to 14 days and refreshed in the background once a copy is over 24 hours old, so only the very first visit takes a few minutes to fill in. CoinGecko itself refreshes roughly every 45 to 60 seconds, so some polls return unchanged numbers. Volume is aggregated across exchanges and cannot be split into buys and sells, so &ldquo;traded&rdquo; means total turnover.</p>
     <p>Whole market figures (total market cap and its 24h change) come from CoinGecko&rsquo;s free <span class="font-mono">/global</span> endpoint, checked every 2 minutes. The Fear &amp; Greed score comes from the <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;text-underline-offset:2px">alternative.me</a> Fear &amp; Greed Index, a daily index checked every 30 minutes. If a source does not answer, that item shows Unknown.</p>
     <p>Each coin&rsquo;s activity ring compares its 24h volume (as a share of market cap) with a rough usual level for that coin, so 50 means a normal day. Those usual levels are estimates, not measured averages. Velocity is a heuristic: 80% average coin activity versus usual and 20% average absolute 24h price move. Zones: Quiet below 35, Normal 35 to 65, Busy above 65.</p>
     <p class="pt-2"><a id="stats-link" class="stats-link" href="https://crypto-pulse-live.goatcounter.com" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Visitor stats<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg></a></p>
@@ -592,7 +592,7 @@ svg{display:block;vertical-align:middle;}
       var arrow = $(k + '-arrow');
       arrow.setAttribute('class', 'arrow ' + (d > 0 ? 'up' : d < 0 ? 'down' : ''));
       $(k + '-delta').textContent = signed(d, c.dec) + ' (' + signed(pct, 3) + '%) ' + (mode === 'live' ? 'since last refresh' : 'last tick');
-      $(k + '-histnote').textContent = perP === '24h' ? (mode !== 'live' ? 'Simulated 24-hour path' : c.has7 ? 'Last 24 hours · hourly' : c.hist.length + (c.hist.length === 1 ? ' refresh' : ' refreshes') + ' charted') : perP !== '7d' ? (mode === 'live' ? 'Last ' + (perP === '6m' ? '6 months' : '12 months') + ' · daily' : 'Simulated ' + (perP === '6m' ? '6-month' : '12-month') + ' path · daily') : mode !== 'live' ? 'Simulated 7-day path' : c.has7 ? 'Last 7 days · hourly' : c.hist.length + (c.hist.length === 1 ? ' refresh' : ' refreshes') + ' charted';
+      $(k + '-histnote').textContent = perP === '24h' ? (mode !== 'live' ? 'Simulated 24-hour path' : c.has7 ? 'Last 24 hours · hourly' : c.hist.length + (c.hist.length === 1 ? ' refresh' : ' refreshes') + ' charted') : perP !== '7d' ? (mode === 'live' ? 'Last ' + (perP === '6m' ? '6 months' : '12 months') + ' · daily' + (histStale(c) ? ' · updating history…' : '') : 'Simulated ' + (perP === '6m' ? '6-month' : '12-month') + ' path · daily') : mode !== 'live' ? 'Simulated 7-day path' : c.has7 ? 'Last 7 days · hourly' : c.hist.length + (c.hist.length === 1 ? ' refresh' : ' refreshes') + ' charted';
       sparkPaint(c);
     });
   }
@@ -720,8 +720,8 @@ svg{display:block;vertical-align:middle;}
   /* ---------------- live feed ---------------- */
   /* ---------------- 6M / 12M history (live feed) ---------------- */
   // CoinGecko's free limit is about 5 calls a minute shared with the price polling, so daily history is fetched
-  // one coin at a time, about 35 seconds apart, and saved on the device for 12 hours. Nothing is invented while it loads.
-  var HIST_KEY = 'cp-hist-v1', HIST_TTL = 43200000, HIST_GAP = 35000;
+  // one coin at a time, about 35 seconds apart, and saved on the device for up to 14 days, and refreshed in the background once a copy is over 24 hours old. Nothing is invented while it loads.
+  var HIST_KEY = 'cp-hist-v1', HIST_KEEP = 14 * 86400000, HIST_STALE = 86400000, HIST_GAP = 35000;
   var hq = { started: false, timer: null };
   function histURL(id) { return 'https://api.coingecko.com/api/v3/coins/' + id + '/market_chart?vs_currency=usd&days=365'; }
   function histParse(j) {
@@ -736,7 +736,7 @@ svg{display:block;vertical-align:middle;}
       var o = JSON.parse(raw); if (!o || o.v !== 1 || !o.d) return;
       KEYS.forEach(function (k) {
         var c = COINS[k], e = o.d[c.id];
-        if (e && Date.now() - e.t < HIST_TTL && Array.isArray(e.p) && e.p.length >= 200) { c.hd = e.p.slice(); c.hdAt = e.t; }
+        if (e && Date.now() - e.t < HIST_KEEP && Array.isArray(e.p) && e.p.length >= 200) { c.hd = e.p.slice(); c.hdAt = e.t; }
       });
     } catch (err) { /* private mode or bad data: just refetch */ }
   }
@@ -747,13 +747,15 @@ svg{display:block;vertical-align:middle;}
       localStorage.setItem(HIST_KEY, JSON.stringify(o));
     } catch (err) { /* ignore */ }
   }
+  function histStale(c) { return mode === 'live' && !!c.hd && !!c.hdAt && Date.now() - c.hdAt > HIST_STALE; }
   function histReady() { return KEYS.filter(function (k) { return COINS[k].hd; }).length; }
   function histPump() {
     clearTimeout(hq.timer);
     if (mode !== 'live') return;
-    var todo = KEYS.filter(function (k) { var c = COINS[k]; return c.ok && !c.hd && !c.hdFail; });
+    var todo = KEYS.filter(function (k) { var c = COINS[k]; return c.ok && (!c.hd || histStale(c)) && !c.hdFail; });
     if (!todo.length) {
       if (KEYS.some(function (k) { return COINS[k].hdFail; })) hq.timer = setTimeout(function () { KEYS.forEach(function (k) { COINS[k].hdFail = false; COINS[k].hdErr = 0; }); histPump(); }, 600000);
+      else hq.timer = setTimeout(histPump, 3600000);   // all fresh: look again in an hour, in case the page stays open past 24h
       return;
     }
     if (document.visibilityState !== 'visible') { hq.timer = setTimeout(histPump, 5000); return; }
