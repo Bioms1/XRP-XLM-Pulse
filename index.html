@@ -144,7 +144,10 @@ body.loading .price,body.loading [id$="-vol"],body.loading [id$="-coins"],body.l
 
 /* ---------- Whole market bar ---------- */
 /* Two tiles: market cap, then a wider Fear & Greed tile. */
-.wm{display:grid;grid-template-columns:1fr;overflow:hidden;}
+.wm{display:grid;grid-template-columns:1fr;overflow:hidden;transition:border-color .6s,box-shadow .6s;}
+/* Green or red glow for the whole bar, following the 24h change in total market cap (same colors as the price cards) */
+.wm.up{border-color:rgba(52,211,153,.5);box-shadow:0 0 0 1px rgba(52,211,153,.12),0 0 34px rgba(52,211,153,.12),inset 0 0 44px rgba(52,211,153,.06);}
+.wm.down{border-color:rgba(244,63,94,.55);box-shadow:0 0 0 1px rgba(244,63,94,.14),0 0 34px rgba(244,63,94,.12),inset 0 0 44px rgba(244,63,94,.06);}
 .wm-item{padding:.9rem 1rem;min-width:0;}
 .wm-item + .wm-item{border-top:1px solid var(--line);}
 @media (min-width:640px){
@@ -257,7 +260,7 @@ svg{display:block;vertical-align:middle;}
       <h2 id="h-wm" class="sec-title"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg> Whole market</h2>
       <p class="sec-sub">All of crypto, not just these eight coins</p>
     </div>
-    <div class="panel wm">
+    <div id="wm-panel" class="panel wm">
       <div class="wm-item">
         <p class="wm-label">Total market cap</p>
         <div class="flex items-center gap-3 flex-wrap mt-1">
@@ -803,7 +806,7 @@ svg{display:block;vertical-align:middle;}
   var GLOBAL_MS = 120000, FNG_MS = 1800000;            // CoinGecko keyless is rate limited (~5 calls/min shared), so /global is polled slowly
   var GLOBAL_STALE = 900000, FNG_STALE = 172800000;    // show Unknown rather than a number that is older than this
   var FNG_NAMES = ['Extreme Fear', 'Fear', 'Neutral', 'Greed', 'Extreme Greed'];
-  var WM = { cap: null, chg: null, gAt: 0, gTried: false, fg: null, fgName: '', fAt: 0, fTried: false };
+  var WM = { cap: null, chg: null, capTxt: '', gAt: 0, gTried: false, fg: null, fgName: '', fAt: 0, fTried: false };
   function finite(v) { return typeof v === 'number' && isFinite(v); }
 
   function wmSet(id, text, cls) { var e = $(id); e.textContent = text; e.className = 'wm-val' + (cls ? ' ' + cls : ''); }
@@ -812,7 +815,15 @@ svg{display:block;vertical-align:middle;}
     var wait = function (tried) { return tried ? ['Unknown', 'unk'] : ['Loading', 'wait']; };
 
     var w = wait(WM.gTried), cap = $('wm-cap'), chg = $('wm-chg');
-    if (gOk && finite(WM.cap) && WM.cap > 0) wmSet('wm-cap', fmtCompact(WM.cap, '$'), ''); else wmSet('wm-cap', w[0], w[1]);
+    if (gOk && finite(WM.cap) && WM.cap > 0) {
+      var ct = fmtCompact(WM.cap, '$');
+      wmSet('wm-cap', ct, '');
+      if (WM.capTxt && ct !== WM.capTxt) { var upMove = WM.cap > WM.capNum; restart($('wm-cap'), upMove ? 'flash-up' : 'flash-down'); restart($('wm-panel'), upMove ? 'glow-up' : 'glow-down'); setTimeout(function () { $('wm-cap').classList.remove('flash-up', 'flash-down'); $('wm-panel').classList.remove('glow-up', 'glow-down'); }, 1000); }
+      WM.capTxt = ct; WM.capNum = WM.cap;
+    } else { wmSet('wm-cap', w[0], w[1]); WM.capTxt = ''; }
+    var panel = $('wm-panel');
+    panel.classList.toggle('up', !!(gOk && finite(WM.chg) && WM.chg >= 0));
+    panel.classList.toggle('down', !!(gOk && finite(WM.chg) && WM.chg < 0));
     if (gOk && finite(WM.chg)) {
       var up = WM.chg >= 0;
       chg.style.display = ''; chg.textContent = (up ? '▲ ' : '▼ ') + signed(WM.chg, 2) + '% 24h'; chg.className = 'pill ' + (up ? 'up' : 'down');
